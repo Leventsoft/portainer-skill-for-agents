@@ -1,84 +1,41 @@
-# Portainer Skill for OpenClaw
+# Portainer Skill for Agents (Hermes-Compatible)
 
-A powerful OpenClaw skill that allows you to manage your Docker infrastructure directly through your Portainer CE instance. Deploy stacks, inspect containers, and execute raw Docker commands without leaving your chat.
+This skill allows agents like Hermes and OpenClaw to integrate with a Portainer CE instance, streamlining Docker infrastructure management. Capabilities include deploying stacks, managing environments, querying Docker details through APIs, and much more.
+
+## Key Features
+
+- **Environment Management**:
+  - List/inspect environments.
+  - Retrieve snapshots of a Docker setup.
+- **Docker Compose + Swarm/Kubernetes Stacks**:
+  - Deploy, update, start/stop, delete stacks.
+  - Detailed stack inspection (docker-compose.yml, environment variables, etc.).
+- **Advanced Docker Command Execution**:
+  - Leverage the Docker Proxy to execute raw API commands through Portainer, enabling operations not natively provided in the GUI.
+- **Portainer System Utilities**:
+  - List Docker templates, manage backups, or even access `raw_request()` endpoints for full system control.
 
 ## Requirements
 
-This skill uses a Python script to communicate with the Portainer API. You must ensure your OpenClaw environment has Python 3 installed along with the `requests` library.
+- Python 3 installed in the agent's runtime.
+- Libraries: `requests` and `urllib3` (installable via `pip`).
+- Portainer CE up and running (API token required).
 
-### Dockerfile Setup
-If you are building a custom OpenClaw image (recommended for persistence), add the following to your `Dockerfile`:
-
-```dockerfile
-# Install Python 3 and pip
-RUN apt-get update && apt-get install -y python3 python3-pip
-
-# Install required Python libraries
-RUN pip3 install requests --break-system-packages
-```
-
-*(Note: `--break-system-packages` is often required on newer Debian/Ubuntu versions like Bookworm to install packages globally via pip. Alternatively, use a virtual environment.)*
-
-## Features
-
-- **Environment Management**: List and query all your Portainer environments (endpoints).
-- **Stack Operations**:
-  - List all running stacks across environments.
-  - Inspect detailed configuration of specific stacks.
-  - **Deploy new stacks** from raw Docker Compose content.
-  - Remove stacks safely.
-- **Advanced Control**: Execute raw Docker API commands via Portainer's proxy (e.g., restart containers, check logs, inspect networks).
-
-## Prerequisites
-
-- An active [Portainer CE](https://www.portainer.io/) instance.
-- An **API Access Token** from your Portainer user settings.
-  - [How to generate an API Access Token](https://docs.portainer.io/api/access)
-- OpenClaw installed and running.
-
-## Installation
-
-### 1. Import the Skill
-You can install this skill directly from GitHub:
-```bash
-openclaw skill install https://github.com/Leventsoft/portainer-skill-openclaw
-```
-
-### 2. Configure Authentication
-Set your Portainer URL and API Key in the OpenClaw configuration.
-See [Portainer API Access](https://docs.portainer.io/api/access) for details on generating a token.
+## Setup
 
 ```bash
-# Set your Portainer URL (include protocol and port if necessary)
-openclaw config set portainer.url "https://portainer.yourdomain.com"
-
-# Set your API Access Token
-openclaw config set portainer.apiKey "ptr_..."
+export PORTAINER_API_TOKEN="ptr_..."  # API Token from Portainer → Settings > User
 ```
 
-## Usage
+You can now enable the skill via your agent configuration. For Hermes:
+```bash
+hermes skills enable portainer
+```
 
-Once installed, you can ask OpenClaw to perform tasks like:
+## Example Usage
 
-> "List all my running stacks on the home-server environment."
-> "Deploy a new nginx stack called 'web-proxy' using this compose file..."
-> "Restart the 'database' container on environment 2."
+Examples of user commands:
 
-### Available Functions
+> "List all my environments."
 
-| Function | Description |
-|----------|-------------|
-| `list_environments()` | Retrieves a list of all connected Portainer environments/endpoints. |
-| `list_stacks(environment_id)` | Lists all stacks, optionally filtered by a specific Environment ID. |
-| `inspect_stack(stack_id)` | Returns full JSON details for a specific stack (services, env vars, etc). |
-| `deploy_stack(stack_name, compose_content, environment_id)` | Deploys a new stack using the provided Docker Compose YAML string. |
-| `remove_stack(stack_id)` | Permanently removes a stack and its associated resources. |
-| `execute_docker_command(environment_id, path, method, payload)` | Proxies a raw Docker API request through Portainer (e.g., `POST /containers/my-id/restart`). |
-
-## Security Note
-
-This skill requires an API Key with sufficient privileges to manage your Docker environments. Ensure your OpenClaw instance is secured, as this skill provides powerful access to your infrastructure.
-
-## License
-
-MIT
+> "Deploy an nginx stack in environment 1 using this Docker Compose content..."
