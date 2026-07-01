@@ -1,41 +1,132 @@
 # Portainer Skill for Agents (Hermes-Compatible)
 
-This skill allows agents like Hermes and OpenClaw to integrate with a Portainer CE instance, streamlining Docker infrastructure management. Capabilities include deploying stacks, managing environments, querying Docker details through APIs, and much more.
+This skill empowers agents like Hermes and OpenClaw to manage Docker infrastructure through a Portainer CE instance. Unlock advanced capabilities to inspect and manage stacks, execute raw Docker commands, and integrate with Kubernetes and Swarm environments directly via the Portainer API.
 
-## Key Features
+---
+
+## 📢 Key Features
 
 - **Environment Management**:
-  - List/inspect environments.
-  - Retrieve snapshots of a Docker setup.
-- **Docker Compose + Swarm/Kubernetes Stacks**:
-  - Deploy, update, start/stop, delete stacks.
-  - Detailed stack inspection (docker-compose.yml, environment variables, etc.).
+  - ✅ List all environments (endpoints) connected to Portainer.
+  - 🔍 Inspect specific environments (e.g., resource usage, Docker engine details).
+  - 📸 Retrieve snapshots of Docker environment states.
+
+- **Stack Operations** (Docker Compose/Swarm/Kubernetes):
+  - 🗂️ Deploy new stacks directly from Docker Compose content files.
+  - 🛠️ Update existing stacks with new configurations (compose files).
+  - ⏯️ Start or stop running stacks.
+  - 🔥 Safely remove stacks while preserving your environment.
+  - 🔍 Inspect detailed configurations, including **docker-compose.yml** and environment variables.
+
 - **Advanced Docker Command Execution**:
-  - Leverage the Docker Proxy to execute raw API commands through Portainer, enabling operations not natively provided in the GUI.
+  - 🛠️ Execute raw Docker API commands (e.g., `containers/json`, `networks` queries).
+  - 🔗 Proxy commands seamlessly via the Portainer API for secure execution.
+
 - **Portainer System Utilities**:
-  - List Docker templates, manage backups, or even access `raw_request()` endpoints for full system control.
+  - 🧰 List all custom templates available in Portainer.
+  - 🚨 Backup or restore your Portainer instance.
+  - 🔧 Access raw endpoints via `raw_request()` for extended flexibility (system-wide control).
 
-## Requirements
+🔥 **Advanced Kubernetes Support!** Deploy Kubernetes stacks by leveraging Portainer's unique capabilities.
 
-- Python 3 installed in the agent's runtime.
-- Libraries: `requests` and `urllib3` (installable via `pip`).
-- Portainer CE up and running (API token required).
+---
 
-## Setup
+## 📋 Requirements
 
+- **Python 3.8+** installed in the agent’s runtime.
+- Libraries: `requests`, `urllib3` (installable via `pip`).
+- An active Portainer CE instance (token required for authentication).
+
+---
+
+## ⚙️ Setup
+
+1. Export the necessary environment variables:
+   ```bash
+   export PORTAINER_API_TOKEN="your_token_here"
+   export PORTAINER_API_URL="https://portainer.yourdomain.com/api"  # Optional (defaults to localhost)
+   ```
+
+2. Enable the skill in your agent configuration (Hermes example):
+   ```bash
+   hermes skills enable portainer
+   ```
+
+---
+
+## 🛠️ Example Usage
+
+Here’s how you can use this skill in interaction with your agent:
+
+**Example 1: List all environments**
+```
+> "List all environments in my Portainer instance."
+```
+**Response:**
+"Here are the connected environments:
+1. `local` (Docker)
+2. `production-cluster` (Kubernetes)
+3. `staging-cluster` (Docker Swarm)"
+
+---
+
+**Example 2: Deploy a new stack**
+```
+> "Deploy an nginx stack named 'web-proxy' to the environment 1."
+```
+Agent request:
 ```bash
-export PORTAINER_API_TOKEN="ptr_..."  # API Token from Portainer → Settings > User
+/opt/data/venv/bin/python3 /opt/data/skills/portainer/scripts/portainer_manager.py deploy_stack "web-proxy" "<Compose content>" --environment 1 --method string
 ```
 
-You can now enable the skill via your agent configuration. For Hermes:
+---
+
+**Example 3: Execute a raw Docker command via Portainer**
+```
+> "List all running containers in environment 2"
+```
+Agent executes:
 ```bash
-hermes skills enable portainer
+/opt/data/skills/portainer/scripts/portainer_manager.py execute_docker_command 2 /containers/json GET
+```
+**Response from Portainer API:**
+- `nginx`, ID: `abc1234`, Status: "Running"
+- `mysql`, ID: `xyz5678`, Status: "Running"
+
+---
+
+**Example 4: Inspect a stack**
+```
+> "Show me the configuration of the stack named 'ai'."
+```
+Agent executes:
+```bash
+/opt/data/skills/portainer/scripts/portainer_manager.py inspect_stack <stack_id>
+```
+---
+
+**Example 5: Deploy a Kubernetes stack**
+```
+> "Deploy a Kubernetes stack named 'data-pipeline' to Production."
+```
+Agent executes:
+```bash
+/opt/data/skills/portainer/scripts/portainer_manager.py deploy_kubernetes_stack 'data-pipeline' '<Manifest>' --environment 2
 ```
 
-## Example Usage
+---
 
-Examples of user commands:
+## 🛡️ Security Notes
 
-> "List all my environments."
+- This skill requires an API token with appropriate privileges.
+- Ensure your agent is operating in a secure environment to prevent unauthorized access to your infrastructure resources.
 
-> "Deploy an nginx stack in environment 1 using this Docker Compose content..."
+---
+
+## 🚀 Compatibility
+
+Works seamlessly with modular chatbot/agent architectures like **Hermes**, **OpenClaw**, and custom integrations.
+
+---
+
+Add it to your stack and simplify Docker management within seconds! 📦
