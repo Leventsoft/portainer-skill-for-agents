@@ -301,49 +301,108 @@ def raw_request(endpoint: str, method: str = "GET", payload: Optional[Dict] = No
 # =============================================================================
 
 if __name__ == "__main__":
-    if len(sys.argv) < 2:
-        print("Usage: python portainer_manager.py <command> [args...]", file=sys.stderr)
-        print("Commands:", file=sys.stderr)
-        print("  list_environments", file=sys.stderr)
-        print("  inspect_environment <endpoint_id>", file=sys.stderr)
-        print("  get_environment_snapshot <endpoint_id>", file=sys.stderr)
-        print("  list_stacks [environment_id]", file=sys.stderr)
-        print("  get_stack_by_name <name>", file=sys.stderr)
-        print("  inspect_stack <stack_id>", file=sys.stderr)
-        print("  get_stack_file <stack_id>", file=sys.stderr)
-        print("  deploy_stack <name> <compose_content> <endpoint_id> [method]", file=sys.stderr)
-        print("  deploy_kubernetes_stack <name> <content> <endpoint_id> [method]", file=sys.stderr)
-        print("  deploy_swarm_stack <name> <content> <endpoint_id> [method]", file=sys.stderr)
-        print("  update_stack <stack_id> <compose_content> <endpoint_id> [prune]", file=sys.stderr)
-        print("  start_stack <stack_id>", file=sys.stderr)
-        print("  stop_stack <stack_id>", file=sys.stderr)
-        print("  remove_stack <stack_id>", file=sys.stderr)
-        print("  redeploy_git_stack <stack_id>", file=sys.stderr)
-        print("  execute_docker_command <env_id> <path> [method] [json_payload]", file=sys.stderr)
-        print("  get_system_info", file=sys.stderr)
-        print("  get_system_version", file=sys.stderr)
-        print("  get_system_status", file=sys.stderr)
-        print("  get_portainer_status", file=sys.stderr)
-        print("  list_registries", file=sys.stderr)
-        print("  inspect_registry <registry_id>", file=sys.stderr)
-        print("  list_templates", file=sys.stderr)
-        print("  list_custom_templates", file=sys.stderr)
-        print("  create_backup", file=sys.stderr)
-        print("  restore_backup <backup_file_path>", file=sys.stderr)
-        print("  raw_request <endpoint> [method] [json_payload]", file=sys.stderr)
-        sys.exit(1)
+    # =========================================================================
+    # LLM-FRIENDLY GUARDS: detect common flag-style args and print helpful msg
+    # =========================================================================
+    for arg in sys.argv[2:]:
+        if arg.startswith("--") or arg.startswith("-"):
+            print(f"ERROR: This script uses POSITIONAL arguments, not flags like '{arg}'", file=sys.stderr)
+            print("  Correct: portainer execute_docker_command 3 /networks", file=sys.stderr)
+            print("  Wrong:   portainer execute_docker_command --env-id 3 --path /networks", file=sys.stderr)
+            print("", file=sys.stderr)
+            print("Usage: portainer <command> [positional args...]", file=sys.stderr)
+            sys.exit(1)
+
+    if len(sys.argv) < 2 or sys.argv[1] in ("--help", "-h"):
+        print("Usage: portainer <command> [args...]", file=sys.stderr)
+        print("", file=sys.stderr)
+        print("Environment/Endpoint:", file=sys.stderr)
+        print("  list_environments                          List all Portainer environments", file=sys.stderr)
+        print("  inspect_environment <env_id>                Inspect a specific environment", file=sys.stderr)
+        print("  get_environment_snapshot <env_id>           Get environment snapshot", file=sys.stderr)
+        print("", file=sys.stderr)
+        print("Stack Management:", file=sys.stderr)
+        print("  list_stacks [env_id]                        List stacks (optional: filter by env)", file=sys.stderr)
+        print("  get_stack_by_name <name>                    Get stack by name", file=sys.stderr)
+        print("  inspect_stack <stack_id>                    Inspect a stack", file=sys.stderr)
+        print("  get_stack_file <stack_id>                   Get stack compose file", file=sys.stderr)
+        print("  start_stack <stack_id>                      Start a stack", file=sys.stderr)
+        print("  stop_stack <stack_id>                       Stop a stack", file=sys.stderr)
+        print("  remove_stack <stack_id>                     Remove a stack", file=sys.stderr)
+        print("  deploy_stack <name> <content> <env_id> [method]    Deploy a new stack", file=sys.stderr)
+        print("  update_stack <stack_id> <content> <env_id> [prune]  Update an existing stack", file=sys.stderr)
+        print("", file=sys.stderr)
+        print("Docker Proxy (Raw Docker API):", file=sys.stderr)
+        print("  execute_docker_command <env_id> <path> [method] [payload]  Run raw Docker API call", file=sys.stderr)
+        print("    Examples: /networks, /containers/json, /images/json, /volumes, /info", file=sys.stderr)
+        print("    The path MUST start with / (e.g. /networks not networks)", file=sys.stderr)
+        print("", file=sys.stderr)
+        print("System/Status:", file=sys.stderr)
+        print("  get_system_info                              Portainer system info", file=sys.stderr)
+        print("  get_system_version                           Portainer version", file=sys.stderr)
+        print("  get_system_status                            Portainer status", file=sys.stderr)
+        print("  get_portainer_status                         Portainer instance status", file=sys.stderr)
+        print("", file=sys.stderr)
+        print("Registry:", file=sys.stderr)
+        print("  list_registries                              List all registries", file=sys.stderr)
+        print("  inspect_registry <reg_id>                    Inspect a registry", file=sys.stderr)
+        print("", file=sys.stderr)
+        print("Templates:", file=sys.stderr)
+        print("  list_templates                               List app templates", file=sys.stderr)
+        print("  list_custom_templates                        List custom templates", file=sys.stderr)
+        print("", file=sys.stderr)
+        print("Advanced:", file=sys.stderr)
+        print("  raw_request <endpoint> [method] [payload]    Generic Portainer API request", file=sys.stderr)
+        print("  create_backup                                Create Portainer backup", file=sys.stderr)
+        print("  restore_backup <file_path>                   Restore from backup", file=sys.stderr)
+        print("", file=sys.stderr)
+        print("EXAMPLES:", file=sys.stderr)
+        print("  portainer list_environments", file=sys.stderr)
+        print("  portainer execute_docker_command 3 /networks", file=sys.stderr)
+        print("  portainer execute_docker_command 3 /containers/json", file=sys.stderr)
+        print("  portainer execute_docker_command 3 /info", file=sys.stderr)
+        print("  portainer list_stacks 3", file=sys.stderr)
+        print(  file=sys.stderr)
+        print("ENV SHORTCUT: Set PORTAINER_ENV_ID=3 then use 'env' as the env_id argument", file=sys.stderr)
+        sys.exit(0 if len(sys.argv) > 1 else 1)
 
     cmd = sys.argv[1]
+
+    # LLM-FRIENDLY: support PORTAINER_ENV_ID shortcut — use 'env' as env_id arg
+    def resolve_env_id(idx: int) -> int:
+        """If arg is 'env', replace with PORTAINER_ENV_ID env var value."""
+        if idx >= len(sys.argv):
+            # deploy_stack wraps the env_id passed separately
+            return
+        arg = sys.argv[idx]
+        if arg == "env":
+            fallback = os.environ.get("PORTAINER_ENV_ID")
+            if not fallback:
+                print("ERROR: Used 'env' as env_id but PORTAINER_ENV_ID is not set.", file=sys.stderr)
+                print("  Set: export PORTAINER_ENV_ID=3 (or whatever your environment ID is)", file=sys.stderr)
+                sys.exit(1)
+            sys.argv[idx] = fallback
+            return int(fallback)
+        return int(arg)
+
+    # LLM-FRIENDLY: auto-add leading / to Docker paths for execute_docker_command
+    def normalize_docker_path(idx: int):
+        arg = sys.argv[idx]
+        if arg == "env":
+            return  # already handled above
+        if not arg.startswith("/"):
+            sys.argv[idx] = "/" + arg
 
     try:
         if cmd == "list_environments":
             result = list_environments()
         elif cmd == "inspect_environment":
-            result = inspect_environment(int(sys.argv[2]))
+            result = inspect_environment(resolve_env_id(2))
         elif cmd == "get_environment_snapshot":
-            result = get_environment_snapshot(int(sys.argv[2]))
+            result = get_environment_snapshot(resolve_env_id(2))
         elif cmd == "list_stacks":
-            env_id = int(sys.argv[2]) if len(sys.argv) > 2 else None
+            env_arg = sys.argv[2] if len(sys.argv) > 2 else None
+            env_id = resolve_env_id(2) if env_arg else None
             result = list_stacks(env_id)
         elif cmd == "get_stack_by_name":
             result = get_stack_by_name(sys.argv[2])
@@ -372,7 +431,8 @@ if __name__ == "__main__":
         elif cmd == "redeploy_git_stack":
             result = redeploy_git_stack(int(sys.argv[2]))
         elif cmd == "execute_docker_command":
-            env_id = int(sys.argv[2])
+            env_id = resolve_env_id(2)
+            normalize_docker_path(3)
             path = sys.argv[3]
             method = sys.argv[4] if len(sys.argv) > 4 else "GET"
             payload = json.loads(sys.argv[5]) if len(sys.argv) > 5 else None
@@ -403,7 +463,8 @@ if __name__ == "__main__":
             payload = json.loads(sys.argv[4]) if len(sys.argv) > 4 else None
             result = raw_request(endpoint, method, payload)
         else:
-            result = {"error": f"Unknown command: {cmd}"}
+            print(json.dumps({"error": f"Unknown command: {cmd}"}, indent=2), flush=True)
+            sys.exit(1)
         
         print(json.dumps(result, indent=2), flush=True)
     except Exception as e:
